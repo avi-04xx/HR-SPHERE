@@ -1,40 +1,39 @@
 import axios from "axios";
 
-function baseURL() {
-  const u = import.meta.env.VITE_API_URL;
-  if (u && String(u).trim()) {
-    return String(u).replace(/\/$/, "") + "/api";
-  }
-  return "/api";
-}
+// ✅ Local backend
+const BACKEND_URL = "http://localhost:5000/api";
 
 const api = axios.create({
-  baseURL: baseURL(),
-  headers: { "Content-Type": "application/json" },
+  baseURL: BACKEND_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
   timeout: 25000,
 });
 
+// ✅ Set token
 export function setAuthToken(token) {
   if (token) {
-    api.defaults.headers.common.Authorization = `Bearer ${token}`;
+    api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
     localStorage.setItem("hr_token", token);
   } else {
-    delete api.defaults.headers.common.Authorization;
+    delete api.defaults.headers.common["Authorization"];
     localStorage.removeItem("hr_token");
   }
 }
 
+// ✅ Load token on refresh
 const saved = localStorage.getItem("hr_token");
 if (saved) {
-  api.defaults.headers.common.Authorization = `Bearer ${saved}`;
+  api.defaults.headers.common["Authorization"] = `Bearer ${saved}`;
 }
 
+// ✅ Error handler
 export function apiErr(err, fallback = "Request failed") {
   if (!err?.response) {
-    return "No API response — run `npm run dev` from project root and open http://localhost:5173 (MongoDB must run).";
+    return "Server not reachable. Check backend.";
   }
-  const m = err.response.data?.message;
-  return typeof m === "string" && m.trim() ? m : fallback;
+  return err.response.data?.message || fallback;
 }
 
 export default api;

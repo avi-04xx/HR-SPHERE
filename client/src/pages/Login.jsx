@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import api, { apiErr } from "../api/client.js";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -7,10 +7,17 @@ import AuthShell from "../components/AuthShell.jsx";
 export default function Login() {
   const navigate = useNavigate();
   const { login, isAuthed, loading } = useAuth();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  // ✅ CLEAR fields when page loads (important)
+  useEffect(() => {
+    setEmail("");
+    setPassword("");
+  }, []);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -18,7 +25,13 @@ export default function Login() {
     setSubmitting(true);
     try {
       const { data } = await api.post("/auth/login", { email, password });
+
       login(data.token, data.user, data.organization);
+
+      // ✅ clear fields after login
+      setEmail("");
+      setPassword("");
+
       navigate("/", { replace: true });
     } catch (err) {
       setError(apiErr(err, "Login failed"));
@@ -34,6 +47,7 @@ export default function Login() {
       </div>
     );
   }
+
   if (isAuthed) {
     return <Navigate to="/" replace />;
   }
@@ -48,31 +62,38 @@ export default function Login() {
       }
     >
       <h1 className="auth-title">Welcome back</h1>
-      <p className="auth-card-sub">Enter your work email to open your HR dashboard.</p>
+      <p className="auth-card-sub">
+        Enter your work email to open your HR dashboard.
+      </p>
+
       {error && <div className="err">{error}</div>}
-      <form onSubmit={handleSubmit}>
+
+      {/* ✅ autocomplete OFF */}
+      <form onSubmit={handleSubmit} autoComplete="off">
         <div className="row">
           <label htmlFor="email">Email</label>
           <input
             id="email"
             type="email"
-            autoComplete="email"
+            autoComplete="off"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
           />
         </div>
+
         <div className="row">
           <label htmlFor="password">Password</label>
           <input
             id="password"
             type="password"
-            autoComplete="current-password"
+            autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
           />
         </div>
+
         <div className="actions">
           <button type="submit" className="btn" disabled={submitting}>
             {submitting ? "Signing in…" : "Sign in"}

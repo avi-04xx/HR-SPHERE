@@ -1,59 +1,79 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import api, { setAuthToken } from "../api/client.js";
+import { setAuthToken } from "../api/client";
 
-const AuthContext = createContext(null);
+const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [organization, setOrganization] = useState(null);
+  const [state, setState] = useState({
+    token: null,
+    user: null,
+    organization: null,
+    isAuthed: false,
+  });
+
   const [loading, setLoading] = useState(true);
 
+  // ✅ RESTORE LOGIN ON REFRESH
   useEffect(() => {
     const token = localStorage.getItem("hr_token");
-    if (!token) {
-      setLoading(false);
-      return;
+
+    if (token) {
+      setAuthToken(token);
+
+      setState((prev) => ({
+        ...prev,
+        token,
+        isAuthed: true,
+      }));
     }
-    setAuthToken(token);
-    api
-      .get("/auth/me")
-      .then((res) => {
-        setUser(res.data.user);
-        setOrganization(res.data.organization);
-      })
-      .catch(() => {
-        setAuthToken(null);
-        setUser(null);
-        setOrganization(null);
-      })
-      .finally(() => setLoading(false));
+
+    setLoading(false);
   }, []);
 
-  function login(token, userData, orgData) {
+  // ✅ LOGIN FUNCTION (FIXED)
+  function login(token, user, organization) {
+    // 🔴 IMPORTANT: save token
+    localStorage.setItem("hr_token", token);
+
+    // 🔴 attach token to axios
     setAuthToken(token);
-    setUser(userData);
-    setOrganization(orgData);
+
+    // update state
+    setState({
+      token,
+      user,
+      organization,
+      isAuthed: true,
+    });
   }
 
+  // ✅ LOGOUT FUNCTION
   function logout() {
-    setAuthToken(null);
-    setUser(null);
-    setOrganization(null);
-  }
+  localStorage.removeItem("hr_token");
+  setAuthToken(null);
 
+  setState({
+    token: null,
+    user: null,
+    organization: null,
+    isAuthed: false,
+  });
+}
   return (
     <AuthContext.Provider
-      value={{ user, organization, loading, login, logout, isAuthed: !!user }}
+      value={{
+        ...state,
+        login,
+        logout,
+        loading,
+      }}
     >
       {children}
     </AuthContext.Provider>
   );
 }
 
+// ✅ custom hook
 export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) {
-    throw new Error("useAuth must be used inside AuthProvider");
-  }
-  return ctx;
+  return useContext(AuthContext);
 }
