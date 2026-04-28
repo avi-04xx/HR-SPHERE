@@ -1,9 +1,13 @@
 import axios from "axios";
 
-// ✅ FIXED: Use VITE_API_URL from Vercel
+console.log("VITE_API_URL from env:", import.meta.env.VITE_API_URL); // ← For debugging
+
+// Use Vercel environment variable
 const BACKEND_URL = import.meta.env.VITE_API_URL 
   ? `${import.meta.env.VITE_API_URL}/api`
   : "http://localhost:5000/api";
+
+console.log("Using backend URL:", BACKEND_URL); // ← For debugging
 
 const api = axios.create({
   baseURL: BACKEND_URL,
@@ -32,7 +36,7 @@ if (saved) {
 
 // Error handler
 export function apiErr(err, fallback = "Request failed") {
-  console.error("API Error:", err);   // For debugging
+  console.error("API Error details:", err);
   if (!err?.response) {
     return "Server not reachable. Check backend.";
   }
