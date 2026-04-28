@@ -1,19 +1,19 @@
 import axios from "axios";
 
-// ✅ Use VITE_API_URL from Vercel (or fallback for local dev)
-const baseURL = import.meta.env.VITE_API_URL 
-  ? `${import.meta.env.VITE_API_URL}/api` 
+// ✅ FIXED: Use VITE_API_URL from Vercel
+const BACKEND_URL = import.meta.env.VITE_API_URL 
+  ? `${import.meta.env.VITE_API_URL}/api`
   : "http://localhost:5000/api";
 
 const api = axios.create({
-  baseURL: baseURL,
+  baseURL: BACKEND_URL,
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 30000,   // increased a bit
+  timeout: 30000,
 });
 
-// ✅ Set token
+// Set auth token
 export function setAuthToken(token) {
   if (token) {
     api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
@@ -30,9 +30,9 @@ if (saved) {
   api.defaults.headers.common["Authorization"] = `Bearer ${saved}`;
 }
 
-// ✅ Better error handler
+// Error handler
 export function apiErr(err, fallback = "Request failed") {
-  console.error("API Error:", err);   // ← Helpful for debugging
+  console.error("API Error:", err);   // For debugging
   if (!err?.response) {
     return "Server not reachable. Check backend.";
   }
