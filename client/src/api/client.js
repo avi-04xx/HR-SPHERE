@@ -1,14 +1,16 @@
 import axios from "axios";
 
-// ✅ Local backend
-const BACKEND_URL = "http://localhost:5000/api";
+// ✅ Use VITE_API_URL from Vercel (or fallback for local dev)
+const baseURL = import.meta.env.VITE_API_URL 
+  ? `${import.meta.env.VITE_API_URL}/api` 
+  : "http://localhost:5000/api";
 
 const api = axios.create({
-  baseURL: BACKEND_URL,
+  baseURL: baseURL,
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 25000,
+  timeout: 30000,   // increased a bit
 });
 
 // ✅ Set token
@@ -22,14 +24,15 @@ export function setAuthToken(token) {
   }
 }
 
-// ✅ Load token on refresh
+// Load saved token
 const saved = localStorage.getItem("hr_token");
 if (saved) {
   api.defaults.headers.common["Authorization"] = `Bearer ${saved}`;
 }
 
-// ✅ Error handler
+// ✅ Better error handler
 export function apiErr(err, fallback = "Request failed") {
+  console.error("API Error:", err);   // ← Helpful for debugging
   if (!err?.response) {
     return "Server not reachable. Check backend.";
   }
